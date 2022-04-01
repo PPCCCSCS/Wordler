@@ -2,6 +2,12 @@ import re
 import tkinter as tk
 from tkinter import ttk, messagebox
 import random
+
+STATES = ["grey","orange","green"]
+
+def btn_clicked(btn):
+    bg_next = STATES[(STATES.index(btn.cget('bg'))+1)%len(STATES)]
+    btn.config(bg=bg_next)
  
 def main():
     root = tk.Tk()
@@ -25,7 +31,8 @@ def main():
                 width=3,
                 height=1,
                 bg="grey",
-                fg="white"
+                fg="white",
+                command=lambda: btn_clicked(btn)
                 )
             btn.grid(row=i+1,column=j,columnspan=5,sticky="W")
             row.append(btn)
