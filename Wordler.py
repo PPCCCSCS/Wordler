@@ -5,6 +5,45 @@ import random
 
 STATES = ["grey","orange","green"]
 
+def check_char_in_pos(word,char,pos):
+    if word[pos] == char:
+        return True
+    else:
+        return False
+
+def check_char_in_word(word,char):
+    if char in word:
+        return True
+    else:
+        return False
+
+def check_char_not_pos(word,char,pos):
+    if check_char_in_word(word,char) and not check_char_in_pos(word,char,pos):
+        return True
+    else:
+        return False
+
+def check_guess_result(word,prev,result):
+    rval = False
+    for r in result:
+        if r == "grey":
+            pass
+        elif r == "orange":
+            pass
+        elif r == "green":
+            pass
+        else:
+            pass
+
+def check_unique(word):
+    test = set()
+    for char in word:
+        test.add(char)
+    if len(test) == len(word):
+        return True
+    else:
+        return False        
+
 def btn_clicked(btn):
     bg_next = STATES[(STATES.index(btn.cget('bg'))+1)%len(STATES)]
     btn.config(bg=bg_next)
@@ -14,13 +53,45 @@ def main():
     root.title("Wordler-Wordle-Guesser")
 
     f = open("Wordle.txt",'r')
-    word_list = f.read().rsplit(",")
-    print(len(word_list))
+    word_list = f.read().strip().rsplit(",")
+
+    dctFrequency = dict()
+    lstFrequency = ""
+    dctWeighted = dict()
+
+    # Count the occurrences of each letter in the Wordle Word List
+    for word in word_list:
+        for char in word:
+            if char in dctFrequency:
+                dctFrequency[char] += 1
+            else:
+                dctFrequency[char] = 1
+
+    # Create a list of letters sorted most common to least
+    for ltr in sorted(dctFrequency,key=dctFrequency.get,reverse=True):
+        lstFrequency += ltr
+
+    print(lstFrequency)
+
+    # Create a dictionary with a weighted rarity score for each word
+    for word in word_list:
+        dctWeighted[word] = 0
+        for char in word:
+            dctWeighted[word] += dctFrequency[char]
+
+    dctWeightedUnique = list(filter(check_unique, dctWeighted))
+
+    print(dctWeightedUnique)
+
+    print(max(dctWeightedUnique,key=dctWeighted.get))
+    
+    print(min(dctWeightedUnique,key=dctWeighted.get))
 
     winMain = tk.Frame(root)
     winMain.grid(row=0,column=0)
 
     ButtonArray = []
+
 
     for i in range(6):
         row = []
