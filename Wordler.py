@@ -1,9 +1,11 @@
 import re
 import tkinter as tk
+import tkinter.font as font
 from tkinter import ttk, messagebox
 import random
 
 STATES = ["grey","orange","green"]
+c_row = 0 # Keep track of which row we're currently on
 
 def check_char_in_pos(word,char,pos):
     if word[pos] == char:
@@ -35,6 +37,10 @@ def check_guess_result(word,prev,result):
         else:
             pass
 
+def first_guess():
+    pass
+    return "farts"
+
 def check_unique(word):
     test = set()
     for char in word:
@@ -44,21 +50,49 @@ def check_unique(word):
     else:
         return False        
 
-def btn_clicked(btn):
-    bg_next = STATES[(STATES.index(btn.cget('bg'))+1)%len(STATES)]
-    btn.config(bg=bg_next)
+def btn_clicked(i,j,ButtonArray):
+    bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
+    ButtonArray[i][j].config(bg=bg_next)
+
+def btn_guessed(BA,dWU,dW):
+    global c_row
+
+    # Pick the max(dctWeightedUnique,key=dctWeighted.get)
+    if c_row == 0:
+        guess = max(dWU,key=dW.get)
+        for i,ch in enumerate(guess):
+            BA[0][i].config(text=ch)
+    # Read the color of the letters for previous guess, filter accordingly
+    elif c_row < 6:
+        BA[c_row][0].config(text="W")
+        BA[c_row][1].config(text="O")
+        BA[c_row][2].config(text="R")
+        BA[c_row][3].config(text="D")
+        BA[c_row][4].config(text="S")
+    else:
+        print("gameover")
+
+    if c_row < 6:
+        print("Guess",c_row,"=",
+              BA[c_row][0]['text']+\
+              BA[c_row][1]['text']+\
+              BA[c_row][2]['text']+\
+              BA[c_row][3]['text']+\
+              BA[c_row][4]['text'])
+        c_row+=1
  
 def main():
     root = tk.Tk()
     root.title("Wordler-Wordle-Guesser")
+    tkFont = font.Font(size=24)
 
     f = open("Wordle.txt",'r')
-    word_list = f.read().strip().rsplit(",")
+    word_list = f.read().upper().strip().rsplit(",")
 
     dctFrequency = dict()
     lstFrequency = ""
     dctWeighted = dict()
-
+    
     # Count the occurrences of each letter in the Wordle Word List
     for word in word_list:
         for char in word:
@@ -71,7 +105,7 @@ def main():
     for ltr in sorted(dctFrequency,key=dctFrequency.get,reverse=True):
         lstFrequency += ltr
 
-    print(lstFrequency)
+    #print(lstFrequency)
 
     # Create a dictionary with a weighted rarity score for each word
     for word in word_list:
@@ -81,18 +115,20 @@ def main():
 
     dctWeightedUnique = list(filter(check_unique, dctWeighted))
 
+    '''#TEST'' '
     print(dctWeightedUnique)
-
     print(max(dctWeightedUnique,key=dctWeighted.get))
-    
     print(min(dctWeightedUnique,key=dctWeighted.get))
+    '''#TEST'''
 
+    # Build the game window
     winMain = tk.Frame(root)
     winMain.grid(row=0,column=0)
 
+    # Each button will correspond to a single letter
     ButtonArray = []
 
-
+    # Build the Letter Button Array, Clickable for Context
     for i in range(6):
         row = []
         for j in range(5):
@@ -103,22 +139,33 @@ def main():
                 height=1,
                 bg="grey",
                 fg="white",
-                command=lambda: btn_clicked(btn)
+                font=tkFont,
+                command=lambda i=i,j=j,ButtonArray=ButtonArray: \
+                btn_clicked(i,j,ButtonArray)
                 )
             btn.grid(row=i+1,column=j,columnspan=5,sticky="W")
             row.append(btn)
         ButtonArray.append(row)
 
+    # create the guess button here
     btnGuess = tk.Button(winMain,
-                         text="NEXT GUESS",
-                         width=20,
+                         text="GUESS WORD",
+                         width=15,
                          height=1,
                          bg="grey",
-                         fg="black",
+                         fg="white",
+                         font=tkFont,
+                         command=lambda c_row=c_row,
+                         ButtonArray=ButtonArray,
+                         dctWeightedUnique=dctWeightedUnique,
+                         dctWeighted=dctWeighted: btn_guessed(ButtonArray,
+                                                              dctWeightedUnique,
+                                                              dctWeighted)
                          )
+    # place the guess button at the top of the game window
     btnGuess.grid(row=0,column=0,columnspan=5,pady=2)
 
-    '''#TEST'''
+    '''#TEST
     ButtonArray[0][0].config(text="S",bg="green")
     ButtonArray[0][1].config(text="T",bg="orange")
     ButtonArray[0][2].config(text="A",bg="grey")
