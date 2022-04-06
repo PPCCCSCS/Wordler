@@ -4,12 +4,13 @@ import tkinter.font as font
 from tkinter import ttk, messagebox
 import random
 
-MAX_ROW = 15
+MAX_ROW = 10
 STATES = ["grey","orange","green"]
 GO_STS = ["black","orange","green"]
 c_row = 0 # Keep track of which row we're currently on
 guesses = list()
 bad_letters = "."
+not_here = ["","","","",""]
 
 
 def check_char_in_pos(word,char,pos):
@@ -40,10 +41,15 @@ def check_unique(word):
         return False        
 
 def btn_clicked(i,j,ButtonArray):
+
+    bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
+
+    '''
     if i < 6:
         bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
     else:
         bg_next = GO_STS[(GO_STS.index(ButtonArray[i][j].cget('bg'))+1)%len(GO_STS)]
+    '''
     ButtonArray[i][j].config(bg=bg_next)
 
 def wfr(BA,row):
@@ -60,42 +66,33 @@ def check_guess_result(word,prev,result):
 
     global guesses
     global bad_letters
+    global not_here
 
     if word in guesses:
-        #print("Duplicate")
         return False
 
-    '''
-    for letter in bad_letters:
-        if letter in bad_letters:
-            return False
-    '''
-
-    #print(bad_letters)
-    
     for i,r in enumerate(result):
         if r == "grey":
             if prev[i] not in bad_letters:
                 bad_letters += prev[i]
-                print("bad letter:",prev[i])
-
+            if word[i] in not_here[i]:
+                return False
             for j,letter in enumerate(word):
                 if result[j] != 'green':
                     if word[j] in bad_letters:
-                    #print(c_row,"grey:",prev[i],"from",prev,"in",word)
                         return False
         elif r == "orange":
+            if prev[i] not in not_here[i]:
+                not_here[i] += prev[i]
+            # If the yellow letter is not in this word; fail the test
             if prev[i] not in word:
-                #print(c_row,"orange:",prev[i],"from",prev,"not in",word)
                 return False
-            elif prev[i] == word[i]:
-                #print(c_row,"orange:",prev[i],"in",prev,"@ pos",i,"in",word)
+            # If the current letter here was ever yellow here; fail test
+            elif word[i] in not_here[i]:
                 return False
         elif r == "green":
             if prev[i] != word[i]:
-                #print(c_row,"green",prev[i],"from",prev,"not @ pos",i,"in",word)
                 return False
-
     return True
 
 def btn_guessed(BA,lWU,dW):
@@ -104,7 +101,7 @@ def btn_guessed(BA,lWU,dW):
     global bad_letters
     dctFiltered = dict()
 
-    print("lWU:",len(lWU),"dW",len(dW),"greys:",bad_letters)
+    #print("lWU:",len(lWU),"dW",len(dW),"greys:",bad_letters)
     
     # Pick the max(dctWeightedUnique,key=dctWeighted.get)
     if c_row == 0:
@@ -120,10 +117,10 @@ def btn_guessed(BA,lWU,dW):
                   BA[c_row-1][3]['bg'],
                   BA[c_row-1][4]['bg']]
 
-        print(result)
+        #print(result)
 
         prev = wfr(BA,c_row - 1)
-        print("prev was:", prev)
+        #print("prev was:", prev)
         for word in dW:
 
             #print("previous word was:", prev)
@@ -131,24 +128,27 @@ def btn_guessed(BA,lWU,dW):
                 dctFiltered[word] = dW[word]
                 #print(word)
 
-        print(len(dctFiltered))
-        guess = max(dctFiltered,key=dW.get)
-        guesses.append(guess)
-        for i,ch in enumerate(guess):
-            BA[c_row][i].config(text=ch)
-            if BA[c_row-1][i]['bg'] == "green":
-                BA[c_row][i].config(bg="green")
+        #print(len(dctFiltered))
+        if len(dctFiltered) > 0:
+            guess = max(dctFiltered,key=dW.get)
+            guesses.append(guess)
+            for i,ch in enumerate(guess):
+                BA[c_row][i].config(text=ch)
+                if BA[c_row-1][i]['bg'] == "green":
+                    BA[c_row][i].config(bg="green")
         
     else:
         print("gameover")
 
     if c_row < MAX_ROW:
+        '''
         print("Guess",c_row,"=",
               BA[c_row][0]['text']+\
               BA[c_row][1]['text']+\
               BA[c_row][2]['text']+\
               BA[c_row][3]['text']+\
               BA[c_row][4]['text'])
+        '''
         c_row+=1
  
 def main():
@@ -219,8 +219,10 @@ def main():
                 command=lambda i=i,j=j,ButtonArray=ButtonArray: \
                 btn_clicked(i,j,ButtonArray)
                 )
+            '''
             if i > 5:
                 btn['bg'] = "black"
+            '''
             btn.grid(row=i+1,column=j,columnspan=5,sticky="W")
             row.append(btn)
         ButtonArray.append(row)
