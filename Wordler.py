@@ -4,10 +4,13 @@ import tkinter.font as font
 from tkinter import ttk, messagebox
 import random
 
+MAX_ROW = 10
 STATES = ["grey","orange","green"]
+GO_STS = ["black","orange","green"]
 c_row = 0 # Keep track of which row we're currently on
 guesses = list()
-bad_letters = list()
+bad_letters = "."
+
 
 def check_char_in_pos(word,char,pos):
     if word[pos] == char:
@@ -37,7 +40,10 @@ def check_unique(word):
         return False        
 
 def btn_clicked(i,j,ButtonArray):
-    bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
+    if i < 6:
+        bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
+    else:
+        bg_next = GO_STS[(GO_STS.index(ButtonArray[i][j].cget('bg'))+1)%len(GO_STS)]
     ButtonArray[i][j].config(bg=bg_next)
 
 def wfr(BA,row):
@@ -59,15 +65,25 @@ def check_guess_result(word,prev,result):
         #print("Duplicate")
         return False
 
+    '''
     for letter in bad_letters:
         if letter in bad_letters:
             return False
+    '''
+
+    #print(bad_letters)
     
     for i,r in enumerate(result):
         if r == "grey":
-            if prev[i] in word:
-                #print(c_row,"grey:",prev[i],"from",prev,"in",word)
-                return False
+            if prev[i] not in bad_letters:
+                bad_letters += prev[i]
+                print("bad letter:",prev[i])
+
+            for j,letter in enumerate(word):
+                if result[j] != 'green':
+                    if word[j] in bad_letters:
+                    #print(c_row,"grey:",prev[i],"from",prev,"in",word)
+                        return False
         elif r == "orange":
             if prev[i] not in word:
                 #print(c_row,"orange:",prev[i],"from",prev,"not in",word)
@@ -85,9 +101,10 @@ def check_guess_result(word,prev,result):
 def btn_guessed(BA,lWU,dW):
     global c_row
     global guesses
+    global bad_letters
     dctFiltered = dict()
 
-    print("lWU:",len(lWU),"dW",len(dW))
+    print("lWU:",len(lWU),"dW",len(dW),"greys:",bad_letters)
     
     # Pick the max(dctWeightedUnique,key=dctWeighted.get)
     if c_row == 0:
@@ -95,7 +112,7 @@ def btn_guessed(BA,lWU,dW):
         for i,ch in enumerate(guess):
             BA[0][i].config(text=ch)
     # Read the color of the letters for previous guess, filter accordingly
-    elif c_row < 6:
+    elif c_row < MAX_ROW:
 
         result = [BA[c_row-1][0]['bg'],
                   BA[c_row-1][1]['bg'],
@@ -123,7 +140,7 @@ def btn_guessed(BA,lWU,dW):
     else:
         print("gameover")
 
-    if c_row < 6:
+    if c_row < MAX_ROW:
         print("Guess",c_row,"=",
               BA[c_row][0]['text']+\
               BA[c_row][1]['text']+\
@@ -186,7 +203,7 @@ def main():
     ButtonArray = []
 
     # Build the Letter Button Array, Clickable for Context
-    for i in range(6):
+    for i in range(MAX_ROW):
         row = []
         for j in range(5):
             btn = tk.Button(
@@ -200,6 +217,8 @@ def main():
                 command=lambda i=i,j=j,ButtonArray=ButtonArray: \
                 btn_clicked(i,j,ButtonArray)
                 )
+            if i > 5:
+                btn['bg'] = "black"
             btn.grid(row=i+1,column=j,columnspan=5,sticky="W")
             row.append(btn)
         ButtonArray.append(row)
