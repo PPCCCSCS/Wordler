@@ -6,6 +6,8 @@ import random
 
 STATES = ["grey","orange","green"]
 c_row = 0 # Keep track of which row we're currently on
+guesses = list()
+bad_letters = list()
 
 def check_char_in_pos(word,char,pos):
     if word[pos] == char:
@@ -25,22 +27,6 @@ def check_char_not_pos(word,char,pos):
     else:
         return False
 
-def check_guess_result(word,prev,result):
-    rval = False
-    for r in result:
-        if r == "grey":
-            pass
-        elif r == "orange":
-            pass
-        elif r == "green":
-            pass
-        else:
-            pass
-
-def first_guess():
-    pass
-    return "farts"
-
 def check_unique(word):
     test = set()
     for char in word:
@@ -54,21 +40,86 @@ def btn_clicked(i,j,ButtonArray):
     bg_next = STATES[(STATES.index(ButtonArray[i][j].cget('bg'))+1)%len(STATES)]
     ButtonArray[i][j].config(bg=bg_next)
 
-def btn_guessed(BA,dWU,dW):
-    global c_row
+def wfr(BA,row):
 
+    return BA[row][0]['text']+\
+           BA[row][1]['text']+\
+           BA[row][2]['text']+\
+           BA[row][3]['text']+\
+           BA[row][4]['text']
+
+# For filtering a SINGLE word in dictionary
+# Use with FILTER to build matching dictionary
+def check_guess_result(word,prev,result):
+
+    global guesses
+    global bad_letters
+
+    if word in guesses:
+        #print("Duplicate")
+        return False
+
+    for letter in bad_letters:
+        if letter in bad_letters:
+            return False
+    
+    for i,r in enumerate(result):
+        if r == "grey":
+            if prev[i] in word:
+                #print(c_row,"grey:",prev[i],"from",prev,"in",word)
+                return False
+        elif r == "orange":
+            if prev[i] not in word:
+                #print(c_row,"orange:",prev[i],"from",prev,"not in",word)
+                return False
+            elif prev[i] == word[i]:
+                #print(c_row,"orange:",prev[i],"in",prev,"@ pos",i,"in",word)
+                return False
+        elif r == "green":
+            if prev[i] != word[i]:
+                #print(c_row,"green",prev[i],"from",prev,"not @ pos",i,"in",word)
+                return False
+
+    return True
+
+def btn_guessed(BA,lWU,dW):
+    global c_row
+    global guesses
+    dctFiltered = dict()
+
+    print("lWU:",len(lWU),"dW",len(dW))
+    
     # Pick the max(dctWeightedUnique,key=dctWeighted.get)
     if c_row == 0:
-        guess = max(dWU,key=dW.get)
+        guess = max(lWU,key=dW.get)
         for i,ch in enumerate(guess):
             BA[0][i].config(text=ch)
     # Read the color of the letters for previous guess, filter accordingly
     elif c_row < 6:
-        BA[c_row][0].config(text="W")
-        BA[c_row][1].config(text="O")
-        BA[c_row][2].config(text="R")
-        BA[c_row][3].config(text="D")
-        BA[c_row][4].config(text="S")
+
+        result = [BA[c_row-1][0]['bg'],
+                  BA[c_row-1][1]['bg'],
+                  BA[c_row-1][2]['bg'],
+                  BA[c_row-1][3]['bg'],
+                  BA[c_row-1][4]['bg']]
+
+        print(result)
+
+        prev = wfr(BA,c_row - 1)
+        print("prev was:", prev)
+        for word in dW:
+
+            #print("previous word was:", prev)
+            if check_guess_result(word,prev,result):
+                dctFiltered[word] = dW[word]
+                #print(word)
+
+        print(len(dctFiltered))
+        guess = max(dctFiltered,key=dW.get)
+        guesses.append(guess)
+        for i,ch in enumerate(guess):
+            BA[c_row][i].config(text=ch)
+        
     else:
         print("gameover")
 
@@ -93,6 +144,7 @@ def main():
     lstFrequency = ""
     dctWeighted = dict()
     
+    
     # Count the occurrences of each letter in the Wordle Word List
     for word in word_list:
         for char in word:
@@ -113,7 +165,12 @@ def main():
         for char in word:
             dctWeighted[word] += dctFrequency[char]
 
-    dctWeightedUnique = list(filter(check_unique, dctWeighted))
+    lstWeightedUnique = list(filter(check_unique, dctWeighted))
+
+    dctWeightedUnique = dict()
+
+    for item in lstWeightedUnique:
+        dctWeightedUnique[item] = dctWeighted[item]
 
     '''#TEST'' '
     print(dctWeightedUnique)
@@ -164,33 +221,7 @@ def main():
                          )
     # place the guess button at the top of the game window
     btnGuess.grid(row=0,column=0,columnspan=5,pady=2)
-
-    '''#TEST
-    ButtonArray[0][0].config(text="S",bg="green")
-    ButtonArray[0][1].config(text="T",bg="orange")
-    ButtonArray[0][2].config(text="A",bg="grey")
-    ButtonArray[0][3].config(text="I",bg="grey")
-    ButtonArray[0][4].config(text="R",bg="grey")
-
-    ButtonArray[1][0].config(text="C",bg="grey")
-    ButtonArray[1][1].config(text="L",bg="grey")
-    ButtonArray[1][2].config(text="O",bg="green")
-    ButtonArray[1][3].config(text="N",bg="orange")
-    ButtonArray[1][4].config(text="E",bg="grey")
-
-    ButtonArray[2][0].config(text="S",bg="green")
-    ButtonArray[2][1].config(text="N",bg="green")
-    ButtonArray[2][2].config(text="O",bg="green")
-    ButtonArray[2][3].config(text="T",bg="orange")
-    ButtonArray[2][4].config(text="S",bg="grey")
-
-    ButtonArray[3][0].config(text="S",bg="green")
-    ButtonArray[3][1].config(text="N",bg="green")
-    ButtonArray[3][2].config(text="O",bg="green")
-    ButtonArray[3][3].config(text="U",bg="green")
-    ButtonArray[3][4].config(text="T",bg="green")
-    '''#TEST'''
-    
+  
     #window = Wordler(root)
     root.mainloop()
 
