@@ -4,7 +4,7 @@ import tkinter.font as font
 from tkinter import ttk, messagebox
 import random
 
-MAX_ROW = 10
+MAX_ROW = 15
 STATES = ["grey","orange","green"]
 GO_STS = ["black","orange","green"]
 c_row = 0 # Keep track of which row we're currently on
@@ -136,6 +136,8 @@ def btn_guessed(BA,lWU,dW):
         guesses.append(guess)
         for i,ch in enumerate(guess):
             BA[c_row][i].config(text=ch)
+            if BA[c_row-1][i]['bg'] == "green":
+                BA[c_row][i].config(bg="green")
         
     else:
         print("gameover")
