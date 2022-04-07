@@ -1,2 +1,2 @@
 # Wordler
-Wordle Word Suggestion Tool
+The Wordle Word Suggestion Tool
